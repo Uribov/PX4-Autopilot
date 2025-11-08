@@ -175,11 +175,32 @@ if [[ $INSTALL_NUTTX == "true" ]]; then
 			;
 
 		echo
-		echo "Fetching Xtensa compilers"
-		wget -q -P $DIR https://github.com/espressif/crosstool-NG/releases/download/esp-13.2.0_20240530/xtensa-esp-elf-13.2.0_20240530-x86_64-linux-gnu.tar.xz
-		sudo tar -xf $DIR/xtensa-esp-elf-13.2.0_20240530-x86_64-linux-gnu.tar.xz -C /opt
-		echo 'export PATH=$PATH:/opt/xtensa-esp-elf/bin/' >> /home/$USER/.bashrc
-	fi
+	  echo
+    XTENSA_DIR="/opt/xtensa-esp-elf"
+    XTENSA_BIN_PATH="/opt/xtensa-esp-elf/bin"
+    BASHRC_FILE="/home/$USER/.bashrc"
+    PATH_CONFIG="export PATH=\$PATH:$XTENSA_BIN_PATH"
+
+    if [ -d "$XTENSA_DIR" ]; then
+        echo "Xtensa compilers already exist in $XTENSA_DIR, skipping download and extraction."
+        
+        if ! grep -qxF "$PATH_CONFIG" "$BASHRC_FILE"; then
+            echo "Adding Xtensa path to $BASHRC_FILE (environment variable missing)"
+            echo "$PATH_CONFIG" >> "$BASHRC_FILE"
+        else
+            echo "Xtensa path already in $BASHRC_FILE, no action needed."
+        fi
+    else
+        echo "Fetching Xtensa compilers"
+        wget -q -P $DIR https://github.com/espressif/crosstool-NG/releases/download/esp-13.2.0_20240530/xtensa-esp-elf-13.2.0_20240530-x86_64-linux-gnu.tar.xz
+        sudo tar -xf $DIR/xtensa-esp-elf-13.2.0_20240530-x86_64-linux-gnu.tar.xz -C /opt
+        
+        if ! grep -qxF "$PATH_CONFIG" "$BASHRC_FILE"; then
+            echo "$PATH_CONFIG" >> "$BASHRC_FILE"
+        fi
+        echo "Xtensa compilers installed and path configured."
+    fi
+fi
 
 	if [[ "${INSTALL_ARCH}" == "aarch64" ]]; then
 		sudo DEBIAN_FRONTEND=noninteractive apt-get -y --quiet --no-install-recommends install \
